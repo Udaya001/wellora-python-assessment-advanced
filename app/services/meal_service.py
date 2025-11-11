@@ -7,6 +7,7 @@ from app.models import User
 from app.schemas.meal import MealCreate, MealUpdate, MealListParams
 from app.core.config import settings
 from app.utils.datetime_utils import utc_now
+from datetime import timezone
 
 
 class MealService:
@@ -14,23 +15,18 @@ class MealService:
         self.db_session = db_session
 
     async def create_meal_log(self, user_id: int, meal_data: MealCreate, idempotency_key: Optional[str] = None) -> Meal:
-
-        #  Handle Idempotency
         if idempotency_key:
-            # Check if a meal with this key already exists for the user
             existing_meal_result = await self.db_session.execute(
                 select(Meal).where(
                     and_(
                         Meal.user_id == user_id,
-                        Meal.idempotency_key == idempotency_key # Check against the new field
+                        Meal.idempotency_key == idempotency_key
                     )
                 )
             )
             existing_meal = existing_meal_result.scalar_one_or_none()
             if existing_meal:
-                # If it exists, return the existing meal (idempotency achieved)
                 return existing_meal
-
 
         food = await self.db_session.get(Food, meal_data.food_id)
         if not food:
@@ -44,21 +40,27 @@ class MealService:
         total_carbs_g = food.carbs_g * meal_data.servings
         total_fat_g = food.fat_g * meal_data.servings
 
+        timestamp_naive = utc_now() # Default to naive UTC now
+        if meal_data.timestamp is not None:
+            # Check if the incoming timestamp is offset-aware
+            if meal_data.timestamp.tzinfo is not None and meal_data.timestamp.tzinfo.utcoffset(meal_data.timestamp) is not None:
+                # Convert aware datetime to naive UTC
+                timestamp_naive = meal_data.timestamp.astimezone(timezone.utc).replace(tzinfo=None)
+            else:
 
-        timestamp = meal_data.timestamp or utc_now()
-
+                timestamp_naive = meal_data.timestamp
 
         db_meal = Meal(
             user_id=user_id,
             food_id=meal_data.food_id,
             servings=meal_data.servings,
-            timestamp=timestamp,
+            timestamp=timestamp_naive, 
             notes=meal_data.notes,
             calories=total_calories,
             protein_g=total_protein_g,
             carbs_g=total_carbs_g,
             fat_g=total_fat_g,
-            idempotency_key=idempotency_key 
+            idempotency_key=idempotency_key
         )
 
         self.db_session.add(db_meal)

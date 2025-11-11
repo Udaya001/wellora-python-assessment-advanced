@@ -3,7 +3,7 @@ from typing import Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from fastapi import HTTPException, status
-from app.models.user import User, UserRole
+from app.models import User, UserRole
 from app.schemas.user import UserCreate, UserUpdate
 from app.schemas.auth import Token, UserLogin
 from app.core.security import get_password_hash, create_access_token, create_refresh_token
@@ -25,7 +25,7 @@ class UserService:
                 status_code=status.HTTP_409_CONFLICT,
                 detail="Email already registered"
             )
-
+             
         # Create new user instance
         db_user = User(
             name=user_data.name,
