@@ -6,8 +6,9 @@ from passlib.context import CryptContext
 from fastapi import HTTPException, status, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from app.core.config import settings
-from app.models.user import User 
+from app.models import User 
 from app.utils.datetime_utils import utc_now 
+from app.db.session import AsyncSessionLocal
 
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -76,9 +77,11 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    from app.db.session import get_db_session # Import here to avoid circular import
-    async with get_db_session() as db:
-        user = await db.get(User, token_data["user_id"])
+
+    user_id_int = int(token_data["user_id"])
+
+    async with AsyncSessionLocal() as db:
+        user = await db.get(User, user_id_int) # Use the integer value
         if user is None:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
@@ -113,9 +116,10 @@ async def get_current_user_from_refresh_token(refresh_token: str):
             detail="Invalid token type. Refresh token required.",
         )
 
-    from app.db.session import get_db_session # Import here to avoid circular import
-    async with get_db_session() as db:
-        user = await db.get(User, token_data["user_id"])
+    user_id_int = int(token_data["user_id"])
+
+    async with AsyncSessionLocal() as db:
+        user = await db.get(User, user_id_int) # Use the integer value
         if user is None:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,

@@ -1,5 +1,6 @@
 from pydantic_settings import BaseSettings
 from typing import Optional
+from pydantic.config import ConfigDict
 
 
 class Settings(BaseSettings):
@@ -10,7 +11,7 @@ class Settings(BaseSettings):
 
     # Database
     database_url: str
-    test_database_url: Optional[str] = None 
+    test_database_url: Optional[str] = "sqlite+aiosqlite:///./test_wellora.db"
 
     # Redis
     redis_url: str
@@ -25,9 +26,7 @@ class Settings(BaseSettings):
     rate_limit_requests: int = 100
     rate_limit_window: int = 3600  
 
-
-    class Config:
-        env_file = ".env" 
+    model_config = ConfigDict(env_file=".env")
 
 
 settings = Settings()

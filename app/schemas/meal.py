@@ -1,6 +1,9 @@
 from pydantic import BaseModel, Field
 from typing import Optional
 from datetime import datetime
+from pydantic.config import ConfigDict
+
+
 
 
 class MealBase(BaseModel):
@@ -30,8 +33,7 @@ class MealInDB(MealBase):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class MealPublic(MealBase):
@@ -41,8 +43,7 @@ class MealPublic(MealBase):
     carbs_g: float # Calculated total
     fat_g: float # Calculated total
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class MealListParams(BaseModel):
