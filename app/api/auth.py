@@ -4,7 +4,7 @@ from fastapi.security import HTTPAuthorizationCredentials
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.session import get_db_session
 from app.schemas.user import UserCreate
-from app.schemas.auth import Token, UserLogin
+from app.schemas.auth import Token, UserLogin, RegistrationResponse
 from app.services.user_service import UserService
 from app.core.security import (
     get_current_user_from_refresh_token, 
@@ -18,32 +18,17 @@ from app.utils.logger import logger
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 
-@router.post("/register", response_model=Token, status_code=status.HTTP_201_CREATED)
+@router.post("/register", response_model=RegistrationResponse, status_code=status.HTTP_201_CREATED)
 async def register_user(
     user_data: UserCreate,
     db: AsyncSession = Depends(get_db_session)
 ):
     user_service = UserService(db)
     try:
-        # Attempt to register the user
         db_user = await user_service.register_user(user_data)
         logger.info(f"New user registered with ID: {db_user.id}")
 
-        # Generate tokens for the newly registered user
-        access_token_expires = timedelta(minutes=settings.access_token_expire_minutes)
-        refresh_token_expires = timedelta(days=settings.refresh_token_expire_days)
-
-        access_token_data = {"sub": str(db_user.id), "role": db_user.role.value}
-        refresh_token_data = {"sub": str(db_user.id), "role": db_user.role.value}
-
-        access_token = create_access_token(
-            access_token_data, expires_delta=access_token_expires
-        )
-        refresh_token = create_refresh_token(
-            refresh_token_data, expires_delta=refresh_token_expires
-        )
-
-        return Token(access_token=access_token, refresh_token=refresh_token, token_type="bearer")
+        return {"message": "User registered successfully"}
 
     except HTTPException:
         raise
@@ -53,6 +38,7 @@ async def register_user(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="An error occurred during registration."
         )
+
 
 
 @router.post("/login", response_model=Token)

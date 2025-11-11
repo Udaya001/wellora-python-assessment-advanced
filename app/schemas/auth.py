@@ -14,3 +14,6 @@ class TokenData(BaseModel):
 class UserLogin(BaseModel):
     email: str
     password: str
+
+class RegistrationResponse(BaseModel):
+    message: str
