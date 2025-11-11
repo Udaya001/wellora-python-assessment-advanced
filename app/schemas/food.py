@@ -1,7 +1,7 @@
-# app/schemas/food.py
 from pydantic import BaseModel, Field
 from typing import Optional
 from datetime import datetime
+from pydantic.config import ConfigDict
 
 
 class FoodBase(BaseModel):
@@ -31,15 +31,13 @@ class FoodInDB(FoodBase):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class FoodPublic(FoodBase):
     id: int
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class FoodSearch(BaseModel):

@@ -2,6 +2,8 @@ from pydantic import BaseModel, EmailStr, Field
 from typing import Optional
 from datetime import datetime
 from enum import Enum
+from pydantic.config import ConfigDict
+
 
 
 class UserRole(str, Enum):
@@ -13,7 +15,7 @@ class UserBase(BaseModel):
     name: str = Field(..., min_length=1, max_length=100)
     email: EmailStr
     gender: Optional[str] = Field(None, max_length=20)
-    age: Optional[int] = Field(None, ge=0, le=150)
+    age: Optional[int] = Field(None, ge=0, le=100)
     height_cm: Optional[float] = Field(None, gt=0)
     weight_kg: Optional[float] = Field(None, gt=0)
     activity_level: Optional[str] = Field(None, max_length=50) 
@@ -39,8 +41,7 @@ class UserInDB(UserBase):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True 
+    model_config = ConfigDict(from_attributes=True)
 
 class UserPublic(BaseModel):
     id: int
@@ -56,5 +57,4 @@ class UserPublic(BaseModel):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
